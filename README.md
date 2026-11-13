@@ -19,15 +19,12 @@ Feed costs account for **60–70%** of total aquaculture operating expenses. Ove
 ## 🎬 Demo Video
 
 <p align="center">
-  <a href="https://youtu.be/abc123XYZ">
-    <img src="https://img.youtube.com/vi/abc123XYZ/https://youtu.be/0TTR-zky1mw?si=06STKZpYGjOpOTTa" alt="Demo Video" width="720"/>
+  <a href="https://youtu.be/0TTR-zky1mw">
+    <img src="https://img.youtube.com/vi/0TTR-zky1mw/maxresdefault.jpg" alt="Autonomous Aquaculture Robot Simulation Demo" width="100%"/>
   </a>
   <br/>
-  <em>▶️ Click the thumbnail to watch the full demo on YouTube</em>
+  <em>▶️ <b>Click the banner above to watch the full autonomous mission simulation on YouTube</b></em>
 </p>
-
-> ⚠️ **Note:** Replace `abc123XYZ` in this README with your actual YouTube video ID.
-> For example, if your video URL is `https://youtu.be/abc123XYZ`, replace every `abc123XYZ` with `abc123XYZ`.
 
 ---
 
