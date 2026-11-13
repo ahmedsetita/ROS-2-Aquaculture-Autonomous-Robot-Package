@@ -20,7 +20,7 @@ Feed costs account for **60–70%** of total aquaculture operating expenses. Ove
 
 <p align="center">
   <a href="https://youtu.be/abc123XYZ">
-    <img src="https://img.youtube.com/vi/abc123XYZ/maxresdefault.jpg" alt="Demo Video" width="720"/>
+    <img src="https://img.youtube.com/vi/abc123XYZ/https://youtu.be/0TTR-zky1mw?si=06STKZpYGjOpOTTa" alt="Demo Video" width="720"/>
   </a>
   <br/>
   <em>▶️ Click the thumbnail to watch the full demo on YouTube</em>
