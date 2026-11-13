@@ -1,0 +1,29 @@
+# Build artifacts
+build/
+install/
+log/
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ROS 2
+*.log
+colcon.meta
+
+# Compiled URDF
+*.urdf
+!urdf/*.urdf.xacro

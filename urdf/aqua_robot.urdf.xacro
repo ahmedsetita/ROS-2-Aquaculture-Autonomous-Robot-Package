@@ -1,0 +1,611 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="aqua_robot">
+
+  <!-- ===================================================================== -->
+  <!-- XACRO PROPERTIES & CONSTANTS                                          -->
+  <!-- ===================================================================== -->
+  <xacro:property name="M_PI" value="3.1415926535897931" />
+  <xacro:property name="DEG2RAD" value="0.017453292519943295" />
+
+  <!-- Base Frame Dimensions (Blue) -->
+  <xacro:property name="base_ring_radius" value="0.44" />
+  <xacro:property name="base_tube_radius" value="0.028" />
+  <xacro:property name="base_z_offset" value="0.04" />
+  <xacro:property name="collar_radius" value="0.27" />
+  <xacro:property name="collar_z" value="0.52" />
+
+  <!-- Hopper Dimensions (Grey) -->
+  <xacro:property name="hopper_cyl_radius" value="0.255" />
+  <xacro:property name="hopper_cyl_length" value="0.34" />
+  <xacro:property name="hopper_cyl_z" value="0.69" />
+
+  <!-- Top Lid & Bottom Valve Dimensions (Red) -->
+  <xacro:property name="top_lid_radius" value="0.275" />
+  <xacro:property name="top_lid_thickness" value="0.03" />
+  <xacro:property name="top_lid_z" value="0.875" />
+  <xacro:property name="valve_radius" value="0.045" />
+  <xacro:property name="valve_length" value="0.08" />
+  <xacro:property name="valve_z" value="0.145" />
+
+  <!-- ===================================================================== -->
+  <!-- RVIZ MATERIALS                                                        -->
+  <!-- ===================================================================== -->
+  <material name="cad_blue">
+    <color rgba="0.10 0.38 0.85 1.0" />
+  </material>
+  <material name="cad_grey">
+    <color rgba="0.62 0.65 0.68 1.0" />
+  </material>
+  <material name="cad_red">
+    <color rgba="0.86 0.14 0.14 1.0" />
+  </material>
+  <material name="sensor_black">
+    <color rgba="0.12 0.12 0.14 1.0" />
+  </material>
+  <material name="feed_gold">
+    <color rgba="0.95 0.72 0.12 1.0" />
+  </material>
+
+  <!-- ===================================================================== -->
+  <!-- INERTIAL MACROS                                                       -->
+  <!-- ===================================================================== -->
+  <xacro:macro name="cylinder_inertial" params="mass r h *origin">
+    <inertial>
+      <xacro:insert_block name="origin" />
+      <mass value="${mass}" />
+      <inertia ixx="${(1.0/12.0) * mass * (3*r*r + h*h)}" ixy="0.0" ixz="0.0"
+               iyy="${(1.0/12.0) * mass * (3*r*r + h*h)}" iyz="0.0"
+               izz="${0.5 * mass * r * r}" />
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="box_inertial" params="mass x y z *origin">
+    <inertial>
+      <xacro:insert_block name="origin" />
+      <mass value="${mass}" />
+      <inertia ixx="${(1.0/12.0) * mass * (y*y + z*z)}" ixy="0.0" ixz="0.0"
+               iyy="${(1.0/12.0) * mass * (x*x + z*z)}" iyz="0.0"
+               izz="${(1.0/12.0) * mass * (x*x + y*y)}" />
+    </inertial>
+  </xacro:macro>
+
+  <!-- ===================================================================== -->
+  <!-- ROOT LINK: base_footprint                                             -->
+  <!-- ===================================================================== -->
+  <link name="base_footprint" />
+
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint" />
+    <child link="base_link" />
+    <origin xyz="0 0 ${base_z_offset}" rpy="0 0 0" />
+  </joint>
+
+  <!-- ===================================================================== -->
+  <!-- 1. BASE FRAME (BLUE): Horizontal Ring + 4 Angled Struts + Collar      -->
+  <!-- ===================================================================== -->
+  <link name="base_link">
+    <xacro:cylinder_inertial mass="14.0" r="${base_ring_radius}" h="0.12">
+      <origin xyz="0 0 0.05" rpy="0 0 0" />
+    </xacro:cylinder_inertial>
+
+    <!-- Bottom Horizontal Structural Ring (8-segment octagonal ring) -->
+    <xacro:macro name="ring_segment" params="angle">
+      <visual>
+        <origin xyz="${base_ring_radius * cos(angle)} ${base_ring_radius * sin(angle)} 0.0"
+                rpy="0 0 ${angle + M_PI/2.0}" />
+        <geometry>
+          <box size="0.36 0.055 0.05" />
+        </geometry>
+        <material name="cad_blue" />
+      </visual>
+    </xacro:macro>
+
+    <xacro:ring_segment angle="0.0" />
+    <xacro:ring_segment angle="${M_PI/4.0}" />
+    <xacro:ring_segment angle="${M_PI/2.0}" />
+    <xacro:ring_segment angle="${3.0*M_PI/4.0}" />
+    <xacro:ring_segment angle="${M_PI}" />
+    <xacro:ring_segment angle="${5.0*M_PI/4.0}" />
+    <xacro:ring_segment angle="${3.0*M_PI/2.0}" />
+    <xacro:ring_segment angle="${7.0*M_PI/4.0}" />
+
+    <!-- 4 Radial Base Support Cross-Spokes -->
+    <visual>
+      <origin xyz="0.30 0 0.0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.26 0.045 0.04" />
+      </geometry>
+      <material name="cad_blue" />
+    </visual>
+    <visual>
+      <origin xyz="-0.30 0 0.0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.26 0.045 0.04" />
+      </geometry>
+      <material name="cad_blue" />
+    </visual>
+    <visual>
+      <origin xyz="0 0.30 0.0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.045 0.26 0.04" />
+      </geometry>
+      <material name="cad_blue" />
+    </visual>
+    <visual>
+      <origin xyz="0 -0.30 0.0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.045 0.26 0.04" />
+      </geometry>
+      <material name="cad_blue" />
+    </visual>
+
+    <!-- 4 Angled Support Struts going upward and inward to the Mounting Collar -->
+    <!-- Strut geometry: starts at radius 0.42 (z=0.02) and ends at radius 0.265 (z=0.48) -->
+    <!-- Center of each strut is at radius 0.3425, z=0.25, inward tilt = 0.325 rad, length = 0.486m -->
+    <xacro:macro name="angled_strut" params="yaw_angle">
+      <visual>
+        <origin xyz="${0.3425 * cos(yaw_angle)} ${0.3425 * sin(yaw_angle)} 0.25"
+                rpy="0 ${-0.325} ${yaw_angle}" />
+        <geometry>
+          <cylinder radius="0.024" length="0.49" />
+        </geometry>
+        <material name="cad_blue" />
+      </visual>
+    </xacro:macro>
+
+    <xacro:angled_strut yaw_angle="${M_PI/4.0}" />
+    <xacro:angled_strut yaw_angle="${3.0*M_PI/4.0}" />
+    <xacro:angled_strut yaw_angle="${5.0*M_PI/4.0}" />
+    <xacro:angled_strut yaw_angle="${7.0*M_PI/4.0}" />
+
+    <!-- Upper Circular Mounting Collar (Blue) at z = 0.48m (relative to base_link) -->
+    <xacro:macro name="collar_segment" params="angle">
+      <visual>
+        <origin xyz="${collar_radius * cos(angle)} ${collar_radius * sin(angle)} 0.48"
+                rpy="0 0 ${angle + M_PI/2.0}" />
+        <geometry>
+          <box size="0.22 0.045 0.055" />
+        </geometry>
+        <material name="cad_blue" />
+      </visual>
+    </xacro:macro>
+
+    <xacro:collar_segment angle="0.0" />
+    <xacro:collar_segment angle="${M_PI/4.0}" />
+    <xacro:collar_segment angle="${M_PI/2.0}" />
+    <xacro:collar_segment angle="${3.0*M_PI/4.0}" />
+    <xacro:collar_segment angle="${M_PI}" />
+    <xacro:collar_segment angle="${5.0*M_PI/4.0}" />
+    <xacro:collar_segment angle="${3.0*M_PI/2.0}" />
+    <xacro:collar_segment angle="${7.0*M_PI/4.0}" />
+
+    <!-- Base Collision Cylinder -->
+    <collision>
+      <origin xyz="0 0 0.25" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="${base_ring_radius}" length="0.54" />
+      </geometry>
+    </collision>
+  </link>
+
+  <!-- ===================================================================== -->
+  <!-- 2. FEED HOPPER (GREY): Cylindrical Tank + Conical Funnel Bottom       -->
+  <!-- ===================================================================== -->
+  <link name="hopper_link">
+    <xacro:cylinder_inertial mass="8.5" r="${hopper_cyl_radius}" h="0.65">
+      <origin xyz="0 0 0.50" rpy="0 0 0" />
+    </xacro:cylinder_inertial>
+
+    <!-- Upper Cylindrical Tank mounted on the Blue Collar -->
+    <visual>
+      <origin xyz="0 0 0.65" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="${hopper_cyl_radius}" length="${hopper_cyl_length}" />
+      </geometry>
+      <material name="cad_grey" />
+    </visual>
+
+    <!-- Conical Funnel Bottom hanging between the 4 Angled Blue Struts -->
+    <!-- Smooth 8-stage tapered frustum from z=0.48 (r=0.250) down to z=0.14 (r=0.052) -->
+    <visual>
+      <origin xyz="0 0 0.46" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.245" length="0.045" />
+      </geometry>
+      <material name="cad_grey" />
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.42" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.218" length="0.045" />
+      </geometry>
+      <material name="cad_grey" />
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.38" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.190" length="0.045" />
+      </geometry>
+      <material name="cad_grey" />
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.34" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.162" length="0.045" />
+      </geometry>
+      <material name="cad_grey" />
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.30" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.135" length="0.045" />
+      </geometry>
+      <material name="cad_grey" />
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.26" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.108" length="0.045" />
+      </geometry>
+      <material name="cad_grey" />
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.22" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.080" length="0.045" />
+      </geometry>
+      <material name="cad_grey" />
+    </visual>
+    <visual>
+      <origin xyz="0 0 0.18" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.055" length="0.045" />
+      </geometry>
+      <material name="cad_grey" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0.55" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="${hopper_cyl_radius}" length="0.55" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="hopper_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="hopper_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+  </joint>
+
+  <!-- ===================================================================== -->
+  <!-- 3. TOP COVER & CENTRAL HANDLE (RED)                                   -->
+  <!-- ===================================================================== -->
+  <link name="top_cover_link">
+    <xacro:cylinder_inertial mass="1.2" r="${top_lid_radius}" h="0.05">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </xacro:cylinder_inertial>
+
+    <!-- Flat Circular Red Lid -->
+    <visual>
+      <origin xyz="0 0 0.0" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="${top_lid_radius}" length="${top_lid_thickness}" />
+      </geometry>
+      <material name="cad_red" />
+    </visual>
+
+    <!-- Raised Inner Rim of Lid -->
+    <visual>
+      <origin xyz="0 0 0.02" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.18" length="0.015" />
+      </geometry>
+      <material name="cad_red" />
+    </visual>
+
+    <!-- Central Handle Left Post -->
+    <visual>
+      <origin xyz="0 0.065 0.05" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.014" length="0.07" />
+      </geometry>
+      <material name="cad_red" />
+    </visual>
+
+    <!-- Central Handle Right Post -->
+    <visual>
+      <origin xyz="0 -0.065 0.05" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.014" length="0.07" />
+      </geometry>
+      <material name="cad_red" />
+    </visual>
+
+    <!-- Central Handle Horizontal Crossbar -->
+    <visual>
+      <origin xyz="0 0 0.085" rpy="${M_PI/2.0} 0 0" />
+      <geometry>
+        <cylinder radius="0.016" length="0.155" />
+      </geometry>
+      <material name="cad_red" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0.02" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="${top_lid_radius}" length="0.08" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="top_cover_joint" type="fixed">
+    <parent link="hopper_link" />
+    <child link="top_cover_link" />
+    <origin xyz="0 0 0.835" rpy="0 0 0" />
+  </joint>
+
+  <!-- ===================================================================== -->
+  <!-- 4. BOTTOM DISPENSER VALVE / NOZZLE (RED) + ACTUATED VALVE INDICATOR   -->
+  <!-- ===================================================================== -->
+  <link name="bottom_valve_housing_link">
+    <xacro:cylinder_inertial mass="0.6" r="${valve_radius}" h="${valve_length}">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </xacro:cylinder_inertial>
+
+    <!-- Red Cylindrical Dispenser Valve Nozzle at Bottom Tip of Cone -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="${valve_radius}" length="${valve_length}" />
+      </geometry>
+      <material name="cad_red" />
+    </visual>
+
+    <!-- Valve Flange Ring -->
+    <visual>
+      <origin xyz="0 0 0.03" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.058" length="0.018" />
+      </geometry>
+      <material name="cad_red" />
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="${valve_radius}" length="${valve_length}" />
+      </geometry>
+    </collision>
+  </link>
+
+  <joint name="bottom_valve_housing_joint" type="fixed">
+    <parent link="hopper_link" />
+    <child link="bottom_valve_housing_link" />
+    <origin xyz="0 0 0.125" rpy="0 0 0" />
+  </joint>
+
+  <!-- Movable Dispenser Valve Spool / Plunger (Visual Indicator for Opening/Closing) -->
+  <link name="feeder_valve_spool_link">
+    <xacro:cylinder_inertial mass="0.1" r="0.032" h="0.06">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </xacro:cylinder_inertial>
+    <visual>
+      <origin xyz="0 0 -0.025" rpy="0 0 0" />
+      <geometry>
+        <cylinder radius="0.032" length="0.05" />
+      </geometry>
+      <material name="feed_gold" />
+    </visual>
+  </link>
+
+  <joint name="feeder_valve_joint" type="prismatic">
+    <parent link="bottom_valve_housing_link" />
+    <child link="feeder_valve_spool_link" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <axis xyz="0 0 -1" />
+    <limit lower="0.0" upper="0.06" effort="20.0" velocity="0.2" />
+    <dynamics damping="5.0" friction="2.0" />
+  </joint>
+
+  <!-- ===================================================================== -->
+  <!-- 5. SENSORS: DOWNWARD/FORWARD RGB CAMERA & IMU                         -->
+  <!-- ===================================================================== -->
+  <link name="camera_link">
+    <xacro:box_inertial mass="0.15" x="0.05" y="0.08" z="0.05">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </xacro:box_inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.05 0.08 0.04" />
+      </geometry>
+      <material name="sensor_black" />
+    </visual>
+  </link>
+
+  <!-- Pitched downward at 0.75 rad (~43 deg) on the front collar to inspect pond floor & fish -->
+  <joint name="camera_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="camera_link" />
+    <origin xyz="0.30 0.0 0.48" rpy="0 0.75 0" />
+  </joint>
+
+  <link name="camera_optical_link" />
+  <joint name="camera_optical_joint" type="fixed">
+    <parent link="camera_link" />
+    <child link="camera_optical_link" />
+    <origin xyz="0 0 0" rpy="${-M_PI/2.0} 0 ${-M_PI/2.0}" />
+  </joint>
+
+  <!-- IMU Sensor Link at Robot Center of Gravity -->
+  <link name="imu_link">
+    <xacro:box_inertial mass="0.05" x="0.03" y="0.03" z="0.015">
+      <origin xyz="0 0 0" rpy="0 0 0" />
+    </xacro:box_inertial>
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+        <box size="0.03 0.03 0.015" />
+      </geometry>
+      <material name="sensor_black" />
+    </visual>
+  </link>
+
+  <joint name="imu_joint" type="fixed">
+    <parent link="base_link" />
+    <child link="imu_link" />
+    <origin xyz="0 0 0.48" rpy="0 0 0" />
+  </joint>
+
+  <!-- ===================================================================== -->
+  <!-- GAZEBO COLORS & SURFACE PROPERTIES                                    -->
+  <!-- ===================================================================== -->
+  <gazebo reference="base_link">
+    <material>Gazebo/Blue</material>
+    <mu1>0.05</mu1>
+    <mu2>0.05</mu2>
+  </gazebo>
+
+  <gazebo reference="hopper_link">
+    <material>Gazebo/Grey</material>
+  </gazebo>
+
+  <gazebo reference="top_cover_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
+  <gazebo reference="bottom_valve_housing_link">
+    <material>Gazebo/Red</material>
+  </gazebo>
+
+  <gazebo reference="feeder_valve_spool_link">
+    <material>Gazebo/Yellow</material>
+    <gravity>false</gravity>
+  </gazebo>
+
+  <gazebo reference="camera_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <gazebo reference="imu_link">
+    <material>Gazebo/Black</material>
+  </gazebo>
+
+  <!-- ===================================================================== -->
+  <!-- GAZEBO PLUGINS: PLANAR MOVE, CAMERA, IMU                              -->
+  <!-- ===================================================================== -->
+
+  <!-- 1. Holonomic / Planar Surface Propulsion Plugin (/cmd_vel -> /odom) -->
+  <gazebo>
+    <plugin name="aqua_robot_planar_move" filename="libgazebo_ros_planar_move.so">
+      <ros>
+        <remapping>cmd_vel:=/cmd_vel</remapping>
+        <remapping>odom:=/odom</remapping>
+      </ros>
+      <update_rate>50.0</update_rate>
+      <publish_rate>50.0</publish_rate>
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_footprint</robot_base_frame>
+      <covariance_x>0.0001</covariance_x>
+      <covariance_y>0.0001</covariance_y>
+      <covariance_yaw>0.001</covariance_yaw>
+    </plugin>
+  </gazebo>
+
+  <!-- 2. Downward/Forward RGB Camera Plugin (/camera/image_raw) -->
+  <gazebo reference="camera_link">
+    <sensor type="camera" name="fish_monitoring_camera">
+      <update_rate>15.0</update_rate>
+      <visualize>true</visualize>
+      <camera name="head">
+        <horizontal_fov>1.3962634</horizontal_fov>
+        <image>
+          <width>640</width>
+          <height>480</height>
+          <format>R8G8B8</format>
+        </image>
+        <clip>
+          <near>0.05</near>
+          <far>25.0</far>
+        </clip>
+        <noise>
+          <type>gaussian</type>
+          <mean>0.0</mean>
+          <stddev>0.005</stddev>
+        </noise>
+      </camera>
+      <plugin name="camera_controller" filename="libgazebo_ros_camera.so">
+        <ros>
+          <remapping>~/image_raw:=/camera/image_raw</remapping>
+          <remapping>~/camera_info:=/camera/camera_info</remapping>
+        </ros>
+        <camera_name>camera</camera_name>
+        <frame_name>camera_optical_link</frame_name>
+        <hack_baseline>0.07</hack_baseline>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+  <!-- 3. IMU Sensor Plugin (/imu/data) -->
+  <gazebo reference="imu_link">
+    <gravity>true</gravity>
+    <sensor name="aqua_imu_sensor" type="imu">
+      <always_on>true</always_on>
+      <update_rate>100.0</update_rate>
+      <visualize>true</visualize>
+      <imu>
+        <angular_velocity>
+          <x>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.001</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.001</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.001</stddev>
+            </noise>
+          </z>
+        </angular_velocity>
+        <linear_acceleration>
+          <x>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>
+            </noise>
+          </x>
+          <y>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>
+            </noise>
+          </y>
+          <z>
+            <noise type="gaussian">
+              <mean>0.0</mean>
+              <stddev>0.01</stddev>
+            </noise>
+          </z>
+        </linear_acceleration>
+      </imu>
+      <plugin filename="libgazebo_ros_imu_sensor.so" name="imu_plugin">
+        <ros>
+          <remapping>~/out:=/imu/data</remapping>
+        </ros>
+        <frame_name>imu_link</frame_name>
+        <initial_orientation_as_reference>false</initial_orientation_as_reference>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+</robot>
